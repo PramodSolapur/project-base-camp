@@ -1,0 +1,17 @@
+{
+  "name": "project-base-camp",
+  "version": "1.0.0",
+  "description": "a project manage application for beginners",
+  "keywords": [
+    "backend",
+    "express",
+    "API"
+  ],
+  "license": "ISC",
+  "author": "Pramod Solapur",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
