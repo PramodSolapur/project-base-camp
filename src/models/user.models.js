@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -109,6 +110,16 @@ userSchema.methods.generateRefreshToken = function () {
       issuer: "basecampy",
     },
   );
+};
+
+userSchema.methods.generateTemporaryToken = function () {
+  const unhashedToken = crypto.randomBytes(20).toString("hex");
+  const hashedToken = crypto
+    .createHash("SHA256")
+    .update(unhashedToken)
+    .digest("hex");
+  const tokenExpiry = new Date(Date.now() + 20 * 60 * 1000); // 20mins
+  return { hashedToken, tokenExpiry, unhashedToken };
 };
 
 export const User = mongoose.model("User", userSchema);
