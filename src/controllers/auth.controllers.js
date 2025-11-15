@@ -148,7 +148,9 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const currentUser = asyncHandler(async (req, res, next) => {
-  res.status(200).json(200, req.user, "Current user fetched successfully");
+  res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
 });
 
 const verifyEmail = asyncHandler(async (req, res, next) => {
@@ -220,7 +222,7 @@ const resendEmailVerification = asyncHandler(async (req, res, next) => {
 
 const refreshAccessToken = asyncHandler(async (req, res, next) => {
   const incomingRefreshToken =
-    req.cookies?.accessToken || req.body?.refreshToken;
+    req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!incomingRefreshToken) {
     throw new ApiError(401, "Unauthorized access");
@@ -273,7 +275,7 @@ const refreshAccessToken = asyncHandler(async (req, res, next) => {
   }
 });
 
-const forogtPasswordRequest = asyncHandler(async (req, res, next) => {
+const forgotPasswordRequest = asyncHandler(async (req, res, next) => {
   const { email } = req.body;
 
   const user = await User.findOne({ email });
@@ -288,7 +290,7 @@ const forogtPasswordRequest = asyncHandler(async (req, res, next) => {
   user.forgotPasswordToken = hashedToken;
   user.forgotPasswordExpiry = tokenExpiry;
 
-  await User.save({ validateBeforeSave: false });
+  await user.save({ validateBeforeSave: false });
 
   await sendMail({
     email: user?.email,
@@ -305,7 +307,7 @@ const forogtPasswordRequest = asyncHandler(async (req, res, next) => {
       new ApiResponse(
         200,
         {},
-        "Password reset nail has been sent on your email ID",
+        "Password reset mail has been sent on your email ID",
       ),
     );
 });
@@ -367,7 +369,7 @@ export {
   verifyEmail,
   resendEmailVerification,
   refreshAccessToken,
-  forogtPasswordRequest,
+  forgotPasswordRequest,
   resetForgotPassword,
   changeCurrentPassword,
 };
