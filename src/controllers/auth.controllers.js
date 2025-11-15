@@ -2,7 +2,11 @@ import { asyncHandler } from "../utils/async-handler.js";
 import { User } from "../models/user.models.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
-import { emailVerificationMailgenContent, sendMail } from "../utils/mail.js";
+import {
+  emailVerificationMailgenContent,
+  forgotPasswordMailgenContent,
+  sendMail,
+} from "../utils/mail.js";
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 
@@ -235,7 +239,7 @@ const refreshAccessToken = asyncHandler(async (req, res, next) => {
     }
 
     if (incomingRefreshToken !== user?.refreshToken) {
-      throw new ApiError(401, "Refresh is expired");
+      throw new ApiError(401, "Refresh token is expired");
     }
 
     const options = {
@@ -269,6 +273,43 @@ const refreshAccessToken = asyncHandler(async (req, res, next) => {
   }
 });
 
+const forogtPasswordRequest = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(404, "User does not exist");
+  }
+
+  const { hashedToken, tokenExpiry, unhashedToken } =
+    user.generateTemporaryToken();
+
+  user.forgotPasswordToken = hashedToken;
+  user.forgotPasswordExpiry = tokenExpiry;
+
+  await User.save({ validateBeforeSave: false });
+
+  await sendMail({
+    email: user?.email,
+    subject: "Password reset request",
+    mailgenContent: forgotPasswordMailgenContent(
+      user.username,
+      `${process.env.FORGOT_PASSWORD_REDIRECT_URL}/${unhashedToken}`,
+    ),
+  });
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "Password reset nail has been sent on your email ID",
+      ),
+    );
+});
+
 export {
   register,
   loginUser,
@@ -277,4 +318,5 @@ export {
   verifyEmail,
   resendEmailVerification,
   refreshAccessToken,
+  forogtPasswordRequest,
 };
