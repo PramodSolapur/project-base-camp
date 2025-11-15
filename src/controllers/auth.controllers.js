@@ -3,6 +3,8 @@ import { User } from "../models/user.models.js";
 import { ApiResponse } from "../utils/api-response.js";
 import { ApiError } from "../utils/api-error.js";
 import { emailVerificationMailgenContent, sendMail } from "../utils/mail.js";
+import crypto from "node:crypto";
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -21,7 +23,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const register = asyncHandler(async (req, res, next) => {
-  const { email, username, password, role } = req.body;
+  const { email, username, password } = req.body;
 
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
@@ -74,7 +76,7 @@ const register = asyncHandler(async (req, res, next) => {
     );
 });
 
-const login = asyncHandler(async (req, res, next) => {
+const loginUser = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
   const existedUser = await User.findOne({ email });
@@ -118,4 +120,27 @@ const login = asyncHandler(async (req, res, next) => {
     );
 });
 
-export { register, login };
+const logoutUser = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: "",
+      },
+    },
+    {
+      new: true,
+    },
+  );
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+  res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User Logged out"));
+});
+
+export { register, loginUser, logoutUser };
